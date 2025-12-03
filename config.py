@@ -18,7 +18,7 @@ BOT_TOKEN = getenv("BOT_TOKEN")
 
 API_URL = getenv("API_URL", 'https://api.thequickearn.xyz') #youtube song url
 VIDEO_API_URL = getenv("VIDEO_API_URL", 'https://api.video.thequickearn.xyz')
-API_KEY = getenv("API_KEY", '30DxNexGenBots8ea03d') 
+API_KEY = getenv("API_KEY", 'NxGBNexGenBotsa54535') 
 # Get your mongo url from cloud.mongodb.com
 MONGO_DB_URI = getenv("MONGO_DB_URI", None)
 
@@ -28,7 +28,7 @@ DURATION_LIMIT_MIN = int(getenv("DURATION_LIMIT", 60))
 LOGGER_ID = int(getenv("LOGGER_ID", None))
 
 # Get this value from on Telegram by /id
-OWNER_ID = int(getenv("OWNER_ID", 7569863273))
+OWNER_ID = int(getenv("OWNER_ID", 7538752811))
 
 ## Fill these variables if you're deploying on heroku.
 # Your heroku app name
@@ -38,7 +38,7 @@ HEROKU_API_KEY = getenv("HEROKU_API_KEY")
 
 UPSTREAM_REPO = getenv(
     "UPSTREAM_REPO",
-    "https://github.com/musicbhai/Myself",
+    "https://github.com/linkers697/Source",
 )
 UPSTREAM_BRANCH = getenv("UPSTREAM_BRANCH", "master")
 GIT_TOKEN = getenv(
@@ -84,21 +84,21 @@ confirmer = {}
 
 
 START_IMG_URL = getenv(
-    "START_IMG_URL", "https://files.catbox.moe/w3esa5.png"
+    "START_IMG_URL", "https://files.catbox.moe/7ux3sk.png"
 )
 PING_IMG_URL = getenv(
-    "PING_IMG_URL", "https://files.catbox.moe/w3esa5.png"
+    "PING_IMG_URL", "https://files.catbox.moe/7ux3sk.png"
 )
-PLAYLIST_IMG_URL = "https://files.catbox.moe/w3esa5.png"
-STATS_IMG_URL = "https://files.catbox.moe/w3esa5.png"
-TELEGRAM_AUDIO_URL = "https://files.catbox.moe/w3esa5.png"
-TELEGRAM_VIDEO_URL = "https://files.catbox.moe/w3esa5.png"
-STREAM_IMG_URL = "https://files.catbox.moe/w3esa5.png"
-SOUNCLOUD_IMG_URL = "https://files.catbox.moe/w3esa5.png"
-YOUTUBE_IMG_URL = "https://files.catbox.moe/w3esa5.png"
-SPOTIFY_ARTIST_IMG_URL = "https://files.catbox.moe/w3esa5.png"
-SPOTIFY_ALBUM_IMG_URL = "https://files.catbox.moe/w3esa5.png"
-SPOTIFY_PLAYLIST_IMG_URL = "https://files.catbox.moe/w3esa5.png"
+PLAYLIST_IMG_URL = "https://files.catbox.moe/taey93.jpg"
+STATS_IMG_URL = "https://files.catbox.moe/taey93.jpg"
+TELEGRAM_AUDIO_URL = "https://files.catbox.moe/taey93.jpg"
+TELEGRAM_VIDEO_URL = "https://files.catbox.moe/taey93.jpg"
+STREAM_IMG_URL = "https://files.catbox.moe/taey93.jpg"
+SOUNCLOUD_IMG_URL = "https://files.catbox.moe/taey93.jpg"
+YOUTUBE_IMG_URL = "https://files.catbox.moe/taey93.jpg"
+SPOTIFY_ARTIST_IMG_URL = "https://files.catbox.moe/taey93.jpg"
+SPOTIFY_ALBUM_IMG_URL = "https://files.catbox.moe/taey93.jpg"
+SPOTIFY_PLAYLIST_IMG_URL = "https://files.catbox.moe/taey93.jpg"
 
 
 def time_to_seconds(time):
