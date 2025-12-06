@@ -1,4 +1,4 @@
- # ⟶̽ जय श्री ༢།म > 𝟑🙏🚩
+# ⟶̽ जय श्री ༢།म > 𝟑🙏🚩
 import os
 import re
 import aiofiles
@@ -11,134 +11,119 @@ from config import YOUTUBE_IMG_URL
 CACHE_DIR = "cache"
 os.makedirs(CACHE_DIR, exist_ok=True)
 
-PANEL_W, PANEL_H = 763, 545
-PANEL_X = (1280 - PANEL_W) // 2
-PANEL_Y = 88
-TRANSPARENCY = 170
-INNER_OFFSET = 36
+# Thumbnail layout (NEW HALF-SPLIT DESIGN)
+CANVAS_W, CANVAS_H = 1280, 720
+LEFT_W = CANVAS_W // 2       # 640px
+RIGHT_W = CANVAS_W // 2      # 640px
 
-THUMB_W, THUMB_H = 542, 273
-THUMB_X = PANEL_X + (PANEL_W - THUMB_W) // 2
-THUMB_Y = PANEL_Y + INNER_OFFSET
+RIGHT_X = LEFT_W             # thumbnail starts at middle
+RIGHT_Y = 0
 
-TITLE_X = 377
-META_X = 377
-TITLE_Y = THUMB_Y + THUMB_H + 10
-META_Y = TITLE_Y + 45
+LEFT_X = 0
+LEFT_Y = 0
 
-BAR_X, BAR_Y = 388, META_Y + 45
-BAR_RED_LEN = 280
-BAR_TOTAL_LEN = 480
+# Soft outer shadow (S1)
+SHADOW_BLUR = 20  # subtle, premium
 
-ICONS_W, ICONS_H = 415, 45
-ICONS_X = PANEL_X + (PANEL_W - ICONS_W) // 2
-ICONS_Y = BAR_Y + 48
+# Font safe load
+def load_font(path, size):
+    try:
+        return ImageFont.truetype(path, size)
+    except:
+        return ImageFont.load_default()
 
-MAX_TITLE_WIDTH = 580
+title_font = load_font("RiteshMusic/assets/thumb/font2.ttf", 40)
+meta_font = load_font("RiteshMusic/assets/thumb/font.ttf", 22)
+duration_font = load_font("RiteshMusic/assets/thumb/font2.ttf", 30)
 
-def trim_to_width(text: str, font: ImageFont.FreeTypeFont, max_w: int) -> str:
-    ellipsis = "…"
-    if font.getlength(text) <= max_w:
-        return text
-    for i in range(len(text) - 1, 0, -1):
-        if font.getlength(text[:i] + ellipsis) <= max_w:
-            return text[:i] + ellipsis
-    return ellipsis
+def clean_text(t):
+    return re.sub(r"\s+", " ", t).strip()
 
 async def get_thumb(videoid: str) -> str:
-    cache_path = os.path.join(CACHE_DIR, f"{videoid}_v4.png")
-    if os.path.exists(cache_path):
-        return cache_path
+    out_path = os.path.join(CACHE_DIR, f"{videoid}_v5.png")
+    if os.path.exists(out_path):
+        return out_path
 
-    # YouTube video data fetch
-    results = VideosSearch(f"https://www.youtube.com/watch?v={videoid}", limit=1)
+    # fetch info
     try:
-        results_data = await results.next()
-        result_items = results_data.get("result", [])
-        if not result_items:
-            raise ValueError("No results found.")
-        data = result_items[0]
-        title = re.sub(r"\W+", " ", data.get("title", "Unsupported Title")).title()
-        thumbnail = data.get("thumbnails", [{}])[0].get("url", YOUTUBE_IMG_URL)
-        duration = data.get("duration")
-        views = data.get("viewCount", {}).get("short", "Unknown Views")
-    except Exception:
-        title, thumbnail, duration, views = "Unsupported Title", YOUTUBE_IMG_URL, None, "Unknown Views"
+        results = VideosSearch(f"https://www.youtube.com/watch?v={videoid}", limit=1)
+        data = await results.next()
+        info = data["result"][0]
 
-    is_live = not duration or str(duration).strip().lower() in {"", "live", "live now"}
-    duration_text = "Live" if is_live else duration or "Unknown Mins"
+        title = clean_text(info.get("title", "Unknown Title"))
+        thumb = info.get("thumbnails", [{}])[0].get("url", YOUTUBE_IMG_URL)
+        duration = info.get("duration")
+        views = info.get("viewCount", {}).get("short", "Unknown Views")
 
-    # Download thumbnail
-    thumb_path = os.path.join(CACHE_DIR, f"thumb{videoid}.png")
+    except:
+        title = "Unknown Title"
+        thumb = YOUTUBE_IMG_URL
+        duration = None
+        views = "Unknown Views"
+
+    is_live = not duration or str(duration).lower() in ["", "live", "live now"]
+    duration_text = "LIVE" if is_live else duration or "Unknown"
+
+    # download thumbnail
+    temp_thumb = os.path.join(CACHE_DIR, f"temp_{videoid}.png")
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(thumbnail) as resp:
+            async with session.get(thumb) as resp:
                 if resp.status == 200:
-                    async with aiofiles.open(thumb_path, "wb") as f:
+                    async with aiofiles.open(temp_thumb, "wb") as f:
                         await f.write(await resp.read())
-    except Exception:
+    except:
         return YOUTUBE_IMG_URL
 
-    # Create base image
-    base = Image.open(thumb_path).resize((1280, 720)).convert("RGBA")
-    bg = ImageEnhance.Brightness(base.filter(ImageFilter.BoxBlur(10))).enhance(0.6)
+    # final canvas
+    base = Image.new("RGBA", (CANVAS_W, CANVAS_H), (0, 0, 0, 0))
 
-    # Frosted glass panel
-    panel_area = bg.crop((PANEL_X, PANEL_Y, PANEL_X + PANEL_W, PANEL_Y + PANEL_H))
-    overlay = Image.new("RGBA", (PANEL_W, PANEL_H), (255, 255, 255, TRANSPARENCY))
-    frosted = Image.alpha_composite(panel_area, overlay)
-    mask = Image.new("L", (PANEL_W, PANEL_H), 0)
-    ImageDraw.Draw(mask).rounded_rectangle((0, 0, PANEL_W, PANEL_H), 50, fill=255)
-    bg.paste(frosted, (PANEL_X, PANEL_Y), mask)
+    # right half thumbnail
+    right_img = Image.open(temp_thumb).convert("RGBA")
+    right_img = right_img.resize((RIGHT_W, CANVAS_H))
 
-    # Draw details
-    draw = ImageDraw.Draw(bg)
+    # paste right side
+    base.paste(right_img, (RIGHT_X, RIGHT_Y))
+
+    # left panel
+    draw = ImageDraw.Draw(base)
+
+    padding = 40
+    text_x = LEFT_X + padding
+    text_y = LEFT_Y + padding
+
+    # Title
+    draw.text((text_x, text_y), title, font=title_font, fill="white")
+    text_y += 60
+
+    # Views
+    draw.text((text_x, text_y), f"Views: {views}", font=meta_font, fill="#e0e0e0")
+    text_y += 40
+
+    # Duration badge (premium aesthetic)
+    dur_w, dur_h = draw.textsize(duration_text, font=duration_font)
+    badge_pad = 20
+    bx1 = text_x
+    by1 = text_y
+    bx2 = bx1 + dur_w + badge_pad
+    by2 = by1 + dur_h + 10
+
+    draw.rounded_rectangle((bx1, by1, bx2, by2), radius=12, fill=(255, 255, 255, 25))
+    draw.text((bx1 + 10, by1 + 5), duration_text, font=duration_font, fill="white")
+
+    # Outer soft shadow (S1)
+    shadow = base.copy().convert("RGBA")
+    shadow = shadow.filter(ImageFilter.GaussianBlur(SHADOW_BLUR))
+
+    final = Image.new("RGBA", (CANVAS_W, CANVAS_H), (0, 0, 0, 0))
+    final.alpha_composite(shadow, (0, 0))
+    final.alpha_composite(base, (0, 0))
+
+    final.save(out_path)
+
     try:
-        title_font = ImageFont.truetype("RiteshMusic/assets/thumb/font2.ttf", 32)
-        regular_font = ImageFont.truetype("RiteshMusic/assets/thumb/font.ttf", 18)
-        watermark_font = ImageFont.truetype("RiteshMusic/assets/thumb/font2.ttf", 20)
-    except OSError:
-        title_font = regular_font = watermark_font = ImageFont.load_default()
-
-    thumb = base.resize((THUMB_W, THUMB_H))
-    tmask = Image.new("L", thumb.size, 0)
-    ImageDraw.Draw(tmask).rounded_rectangle((0, 0, THUMB_W, THUMB_H), 20, fill=255)
-    bg.paste(thumb, (THUMB_X, THUMB_Y), tmask)
-
-    draw.text((TITLE_X, TITLE_Y), trim_to_width(title, title_font, MAX_TITLE_WIDTH), fill="black", font=title_font)
-    draw.text((META_X, META_Y), f"YouTube | {views}", fill="black", font=regular_font)
-
-    # Progress bar
-    draw.line([(BAR_X, BAR_Y), (BAR_X + BAR_RED_LEN, BAR_Y)], fill="red", width=6)
-    draw.line([(BAR_X + BAR_RED_LEN, BAR_Y), (BAR_X + BAR_TOTAL_LEN, BAR_Y)], fill="gray", width=5)
-    draw.ellipse([(BAR_X + BAR_RED_LEN - 7, BAR_Y - 7), (BAR_X + BAR_RED_LEN + 7, BAR_Y + 7)], fill="red")
-    draw.text((BAR_X, BAR_Y + 15), "00:00", fill="black", font=regular_font)
-    end_text = "Live" if is_live else duration_text
-    draw.text((BAR_X + BAR_TOTAL_LEN - (90 if is_live else 60), BAR_Y + 15), end_text, fill="red" if is_live else "black", font=regular_font)
-
-    # Icons
-    icons_path = "RiteshMusic/assets/thumb/play_icons.png"
-    if os.path.isfile(icons_path):
-        ic = Image.open(icons_path).resize((ICONS_W, ICONS_H)).convert("RGBA")
-        r, g, b, a = ic.split()
-        black_ic = Image.merge("RGBA", (r.point(lambda *_: 0), g.point(lambda *_: 0), b.point(lambda *_: 0), a))
-        bg.paste(black_ic, (ICONS_X, ICONS_Y), black_ic)
-
-    # ✅ Watermark with glow
-    watermark_text = "⟶̽ जय श्री ༢།म >𝟑🙏🚩"
-    text_size = draw.textsize(watermark_text, font=watermark_font)
-    x = bg.width - text_size[0] - 25
-    y = bg.height - text_size[1] - 25
-    glow_pos = [(x + dx, y + dy) for dx in (-1, 1) for dy in (-1, 1)]
-    for pos in glow_pos:
-        draw.text(pos, watermark_text, font=watermark_font, fill=(0, 0, 0, 180))
-    draw.text((x, y), watermark_text, font=watermark_font, fill=(255, 255, 255, 240))
-
-    # Cleanup
-    try:
-        os.remove(thumb_path)
-    except OSError:
+        os.remove(temp_thumb)
+    except:
         pass
 
-    bg.save(cache_path)
-    return cache_path
+    return out_path
